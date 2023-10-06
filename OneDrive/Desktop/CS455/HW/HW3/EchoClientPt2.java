@@ -22,22 +22,27 @@ public class EchoClientPt2 {
             BufferedReader serverReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
             //setup phase information
-            System.out.print("Enter: Measurement Type, Number of Probes, Message Size, and Server Delay: ");
+            System.out.print("Enter Measurement Type, Number of Probes, Message Size, and Server Delay: ");
             String message = reader.readLine();
 
             //send to server to check for entry errors
             writer.println("s" + " " + message);
-
+            
+            String msg = serverReader.readLine();
             //if server return 200 OK print ok message
-            if(serverReader.readLine() == "200 OK: Ready") {
-                System.out.println(serverReader.readLine());
+            if(msg.equals("200 OK: Ready")) {
+                System.out.println("--------------------");
+                System.out.println(msg);
+                System.out.println("--------------------");
             }
             else { 
                 //otherwise 404 and exit
-                System.out.println(serverReader.readLine());
+                System.out.println("--------------------");
+                System.out.println(msg);
+                System.out.println("--------------------");
                 System.exit(1);
             }
-
+            
             //split message up to get information
             String[] tokens = message.split(" ");
             //take input variables
@@ -45,18 +50,19 @@ public class EchoClientPt2 {
             int numProbes = Integer.parseInt(tokens[1]);
             int messageSize = Integer.parseInt(tokens[2]);
             int serverDelay = Integer.parseInt(tokens[3]);
-
+            
             //generate payload
             String payload = "";
-            for (int x = 0; x < messageSize; x++); {
+            for (int x = 0; x < messageSize; x++) {
                 payload += "a";
-            }
+             }
 
             //collect rtt's for each probe
             long Trtt = 0;
             //sending probes
             int i = 0;
             while(i < numProbes) {
+                
                 //start timer
                 long startTime = System.currentTimeMillis();
                 
@@ -68,39 +74,54 @@ public class EchoClientPt2 {
                 //generate & send probe
                 writer.println("m" + " " + i + " " + payload);
 
+                //recieve probe
+                String mmsg = serverReader.readLine();
+                //split probe
+                String[] mTok = mmsg.split(" ");
+
                 //end timer
                 long endTime = System.currentTimeMillis();
+
                 //check server response
-                if (serverReader.readLine() == "404 ERROR: Invalid Measurement Message") {
-                    System.out.println(serverReader.readLine());
+                if (mmsg.equals("404 ERROR: Invalid Measurement Message")) {
+                    System.out.println(mmsg);
+                    System.out.println("--------------------");
                     System.exit(1);
                 }
                 else {
                     //calculate the rtt and add to total rtt
-                    long rtt = endTime - startTime;
+                    long rtt = (endTime - startTime);
                     Trtt += rtt;
                     //print server response
-                    System.out.println("Server Echo: " + serverReader.readLine());
-                    System.out.println("Round trip time: " + rtt);
+                    System.out.println("Server Echo: " + "{" + mTok[0] + " " + mTok[1] + " |" + " Payload: " + messageSize + " a's"+ "}");
+                    System.out.println("Round trip time: " + rtt + "ms");
+                    System.out.println("--------------------");
                 }
                 //increment i
                 i++;
             } 
 
             //rtt or tput calculations
-            if (measurementType == "rtt") {
-                System.out.println("Mean round trip time for this connection: ");
-                System.out.println(Trtt / numProbes);
+            if (measurementType.equals("rtt")) {
+                System.out.print("Mean round trip time for this connection: ");
+                System.out.println(Trtt / numProbes + "ms");
+                System.out.println("--------------------");
             }
             else {
-                System.out.println("Throughput for this connection:");
-                System.out.println(((long)messageSize)/(Trtt / numProbes));
+                System.out.print("Throughput for this connection: ");
+                System.out.println(((long)messageSize)/(Trtt / numProbes) + "MBps");
+                System.out.println("--------------------");
             }
 
             //send closing connection message
             writer.println("t");
+            
+            String tmsg = serverReader.readLine();
             //error checking closing connection
-            if(serverReader.readLine() == "200 OK: Closing Connection") {
+            if(tmsg.equals("200 OK: Closing Connection")) {
+                //print 200 msg from server
+                System.out.println(tmsg);
+                System.out.println("--------------------");
                 //close writer, reader, and server reader
                 writer.close();
                 reader.close();
@@ -108,8 +129,9 @@ public class EchoClientPt2 {
                 socket.close();
             }
             else { 
-                //otherwise 404 and exit
-                System.out.println(serverReader.readLine());
+                //otherwise print 404 and exit
+                System.out.println(tmsg);
+                System.out.println("--------------------");
                 System.exit(1);
             }
         } 
