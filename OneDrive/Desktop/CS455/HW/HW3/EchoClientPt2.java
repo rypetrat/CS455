@@ -109,7 +109,7 @@ public class EchoClientPt2 {
             }
             else {
                 System.out.print("Throughput for this connection: ");
-                System.out.println(((long)messageSize)/(Trtt / numProbes) + "MBps");
+                System.out.println(((long)messageSize)/(Trtt / numProbes) + "Bps");
                 System.out.println("--------------------");
             }
 
